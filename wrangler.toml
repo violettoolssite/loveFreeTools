@@ -1,23 +1,22 @@
-name = "free-email-neon"
-main = "server/workers-neon.js"
+name = "login"
+main = "server/workers-mysql.js"
 compatibility_date = "2024-01-01"
 
-# 环境变量（在 Cloudflare Dashboard 中设置，或使用 wrangler secret put）
-# DATABASE_URL - Neon 数据库连接字符串
-# ADMIN_KEY - 管理员密钥（可选）
-# RESEND_API_KEY - Resend API 密钥（可选，用于发送邮件）
+# 环境变量（在 Cloudflare Dashboard 中设置）
+# API_BASE - 后端 API 地址（如 https://api.yourdomain.com）
+# ADMIN_KEY - 管理员密钥
+# MODELSCOPE_KEY - ModelScope API Key（AI 备用，可选）
 
-# Cron Triggers - 每小时执行一次自动清理任务
-[triggers]
-crons = ["0 * * * *"]
+# AI 绑定（需要在 Dashboard 中配置）
+# [ai]
+# binding = "AI"
 
-# 注意：如果使用 Dashboard 部署，需要手动安装依赖
-# 如果使用 Wrangler CLI，运行：npm install @neondatabase/serverless
+# 如果需要 KV 存储
+# [[kv_namespaces]]
+# binding = "EMAILS_KV"
+# id = "your-kv-namespace-id"
 
-# 如果需要使用不同的环境，可以添加环境配置
-# [env.production]
-# name = "free-email-neon-prod"
-# 
-# [env.staging]
-# name = "free-email-neon-staging"
-
+# 自定义域名（可选）
+# [[routes]]
+# pattern = "yourdomain.com/*"
+# zone_name = "yourdomain.com"
