@@ -125,7 +125,7 @@ const AIService = {
    * @returns {Promise<string|null>} 验证码
    */
   async extractVerificationCode(env, text, subject) {
-    if (!this.isEnabled() || !env.AI) return null;
+    if (!this.isEnabled()) return null;
     
     const content = `${subject}\n${text}`.substring(0, 2000);
     const prompt = `从以下邮件内容中提取验证码。验证码通常是4-8位的数字或字母数字组合。
@@ -152,7 +152,7 @@ ${content}`;
    * @returns {Promise<string|null>} 摘要
    */
   async generateSummary(env, text, subject) {
-    if (!this.isEnabled() || !env.AI) return null;
+    if (!this.isEnabled()) return null;
     
     const content = `${subject}\n${text}`.substring(0, 3000);
     const prompt = `用中英双语各一句话概括以下邮件内容。
@@ -175,7 +175,7 @@ ${content}`;
    * @returns {Promise<boolean>} 是否为垃圾邮件
    */
   async detectSpam(env, text, subject, from) {
-    if (!this.isEnabled() || !env.AI) return false;
+    if (!this.isEnabled()) return false;
     
     const content = `发件人: ${from}\n主题: ${subject}\n内容: ${text}`.substring(0, 2000);
     const prompt = `判断以下邮件是否为垃圾邮件或钓鱼邮件。
@@ -195,7 +195,7 @@ ${content}`;
    * @returns {Promise<string>} 语言代码 (zh/en/ja/ko/...)
    */
   async detectLanguage(env, text) {
-    if (!this.isEnabled() || !env.AI) return 'unknown';
+    if (!this.isEnabled()) return 'unknown';
     
     const content = text.substring(0, 500);
     const prompt = `检测以下文本的语言，只输出语言代码（如：zh、en、ja、ko、fr、de、es、ru）：
@@ -216,7 +216,7 @@ ${content}`;
    * @returns {Promise<string|null>} 翻译结果
    */
   async translate(env, text, targetLang = 'zh') {
-    if (!this.isEnabled() || !env.AI) return null;
+    if (!this.isEnabled()) return null;
     
     const langMap = {
       'zh': '中文',
@@ -246,8 +246,8 @@ ${content}`;
    * @returns {Promise<{safe: boolean, reason: string}>} 安全检测结果
    */
   async checkUrlSafety(env, url) {
-    if (!this.isEnabled() || !env.AI) {
-      return { safe: true, reason: 'AI 不可用，跳过检测' };
+    if (!this.isEnabled()) {
+      return { safe: true, reason: 'AI 功能已禁用' };
     }
     
     const prompt = `分析以下 URL 是否可能是恶意链接（钓鱼、诈骗、恶意软件等）。
@@ -276,7 +276,7 @@ URL: ${url}`;
    * @returns {Promise<object>} 分析结果
    */
   async analyzeEmail(env, email) {
-    if (!this.isEnabled() || !env.AI) {
+    if (!this.isEnabled()) {
       return {
         verificationCode: null,
         summary: null,
