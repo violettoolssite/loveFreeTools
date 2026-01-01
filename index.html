@@ -314,8 +314,16 @@
                             </div>
                         </div>
                     </div>
-                    <div class="proxy-usage" title='proxies = {"http": "http://115.190.229.8:8888"}'>
-                        <code class="proxy-code">http://115.190.229.8:8888</code>
+                    <div class="proxy-actions-row">
+                        <button class="btn btn-sm btn-primary" id="showProxyUsageBtn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                            使用详情
+                        </button>
                     </div>
                 </div>
 
@@ -1106,6 +1114,118 @@ docker info | grep -A 5 "Registry Mirrors"</code></pre>
                                 <li>仅支持 Docker Hub 公共镜像加速</li>
                             </ul>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 代理使用详情模态框 -->
+        <div class="modal-overlay" id="proxyUsageModal">
+            <div class="modal proxy-usage-modal">
+                <div class="modal-header">
+                    <h3 class="modal-title">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                            <line x1="8" y1="21" x2="16" y2="21"/>
+                            <line x1="12" y1="17" x2="12" y2="21"/>
+                        </svg>
+                        代理使用详情
+                    </h3>
+                    <button class="btn btn-close" id="closeProxyUsageBtn" title="关闭">
+                        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="proxy-info-box">
+                        <div class="proxy-detail-item">
+                            <span class="proxy-label">代理地址</span>
+                            <code class="proxy-value">http://115.190.229.8:8888</code>
+                            <button class="btn btn-xs btn-copy-proxy" data-proxy="http://115.190.229.8:8888">复制</button>
+                        </div>
+                        <div class="proxy-detail-item">
+                            <span class="proxy-label">协议</span>
+                            <span class="proxy-value">HTTP / HTTPS</span>
+                        </div>
+                        <div class="proxy-detail-item">
+                            <span class="proxy-label">带宽</span>
+                            <span class="proxy-value">1 Mbps (约 125KB/s)</span>
+                        </div>
+                    </div>
+
+                    <div class="code-examples">
+                        <div class="code-tabs">
+                            <button class="code-tab active" data-lang="python">Python</button>
+                            <button class="code-tab" data-lang="curl">cURL</button>
+                            <button class="code-tab" data-lang="nodejs">Node.js</button>
+                            <button class="code-tab" data-lang="java">Java</button>
+                            <button class="code-tab" data-lang="go">Go</button>
+                        </div>
+                        <div class="code-content">
+                            <pre class="code-block" id="proxyCodePython">import requests
+
+proxies = {
+    "http": "http://115.190.229.8:8888",
+    "https": "http://115.190.229.8:8888"
+}
+
+response = requests.get("http://example.com", proxies=proxies)
+print(response.text)</pre>
+                            <pre class="code-block" id="proxyCodeCurl" style="display:none;">curl -x http://115.190.229.8:8888 http://example.com
+
+# HTTPS 请求
+curl -x http://115.190.229.8:8888 https://example.com</pre>
+                            <pre class="code-block" id="proxyCodeNodejs" style="display:none;">const axios = require('axios');
+const HttpsProxyAgent = require('https-proxy-agent');
+
+const agent = new HttpsProxyAgent('http://115.190.229.8:8888');
+
+axios.get('http://example.com', { httpAgent: agent })
+  .then(res => console.log(res.data));</pre>
+                            <pre class="code-block" id="proxyCodeJava" style="display:none;">import java.net.*;
+
+Proxy proxy = new Proxy(Proxy.Type.HTTP, 
+    new InetSocketAddress("115.190.229.8", 8888));
+
+URL url = new URL("http://example.com");
+HttpURLConnection conn = (HttpURLConnection) url.openConnection(proxy);
+conn.connect();</pre>
+                            <pre class="code-block" id="proxyCodeGo" style="display:none;">package main
+
+import (
+    "net/http"
+    "net/url"
+)
+
+func main() {
+    proxyURL, _ := url.Parse("http://115.190.229.8:8888")
+    client := &http.Client{
+        Transport: &http.Transport{
+            Proxy: http.ProxyURL(proxyURL),
+        },
+    }
+    resp, _ := client.Get("http://example.com")
+    defer resp.Body.Close()
+}</pre>
+                        </div>
+                        <button class="btn btn-sm btn-outline btn-copy-code" id="copyProxyCodeBtn">
+                            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                            复制代码
+                        </button>
+                    </div>
+
+                    <div class="proxy-notes">
+                        <h4>使用说明</h4>
+                        <ul>
+                            <li>带宽有限 (1Mbps)，建议控制并发数在 5 以内</li>
+                            <li>适合轻量级爬虫，不适合大文件下载</li>
+                            <li>无认证，请勿滥用</li>
+                        </ul>
                     </div>
                 </div>
             </div>

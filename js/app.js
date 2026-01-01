@@ -552,6 +552,58 @@ const App = {
             });
         });
 
+        // 代理使用详情模态框
+        const proxyUsageModal = document.getElementById('proxyUsageModal');
+        const showProxyUsageBtn = document.getElementById('showProxyUsageBtn');
+        const closeProxyUsageBtn = document.getElementById('closeProxyUsageBtn');
+        const copyProxyCodeBtn = document.getElementById('copyProxyCodeBtn');
+        
+        if (showProxyUsageBtn && proxyUsageModal) {
+            showProxyUsageBtn.addEventListener('click', () => {
+                proxyUsageModal.classList.add('active');
+            });
+            
+            closeProxyUsageBtn.addEventListener('click', () => {
+                proxyUsageModal.classList.remove('active');
+            });
+            
+            proxyUsageModal.addEventListener('click', (e) => {
+                if (e.target === proxyUsageModal) {
+                    proxyUsageModal.classList.remove('active');
+                }
+            });
+            
+            // 代码标签切换
+            document.querySelectorAll('.code-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const lang = tab.dataset.lang;
+                    document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    document.querySelectorAll('.code-content .code-block').forEach(block => {
+                        block.style.display = 'none';
+                    });
+                    const codeBlock = document.getElementById('proxyCode' + lang.charAt(0).toUpperCase() + lang.slice(1));
+                    if (codeBlock) {
+                        codeBlock.style.display = 'block';
+                    }
+                });
+            });
+            
+            // 复制代码
+            if (copyProxyCodeBtn) {
+                copyProxyCodeBtn.addEventListener('click', async () => {
+                    const activeBlock = document.querySelector('.code-content .code-block[style*="display: block"], .code-content .code-block:not([style*="display: none"]):not([style])');
+                    if (activeBlock) {
+                        const success = await Utils.copyToClipboard(activeBlock.textContent);
+                        if (success) {
+                            this.showToast('success', '已复制', '代码已复制到剪贴板');
+                        }
+                    }
+                });
+            }
+        }
+
         // GitHub 链接转换
         this.elements.convertUrlBtn.addEventListener('click', () => {
             this.convertGitHubUrl();

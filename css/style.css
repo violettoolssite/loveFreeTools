@@ -4459,3 +4459,150 @@ body::after {
     margin-bottom: 10px;
 }
 
+.proxy-actions-row {
+    margin-top: 12px;
+}
+
+.proxy-actions-row .btn-primary {
+    width: 100%;
+    background: linear-gradient(135deg, #ffa500, #ff6b00);
+    border: none;
+}
+
+.proxy-actions-row .btn-primary:hover {
+    background: linear-gradient(135deg, #ffb733, #ff8533);
+}
+
+/* 代理使用详情模态框 */
+.proxy-usage-modal {
+    max-width: 700px;
+}
+
+.proxy-info-box {
+    background: rgba(255, 165, 0, 0.1);
+    border: 1px solid rgba(255, 165, 0, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.proxy-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 165, 0, 0.1);
+}
+
+.proxy-detail-item:last-child {
+    border-bottom: none;
+}
+
+.proxy-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    min-width: 70px;
+}
+
+.proxy-detail-item .proxy-value {
+    font-family: var(--font-mono);
+    color: #ffa500;
+    font-size: 14px;
+    flex: 1;
+}
+
+.proxy-detail-item .btn-xs {
+    padding: 4px 10px;
+    font-size: 11px;
+    background: rgba(255, 165, 0, 0.2);
+    border: 1px solid rgba(255, 165, 0, 0.4);
+    color: #ffa500;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.proxy-detail-item .btn-xs:hover {
+    background: rgba(255, 165, 0, 0.3);
+}
+
+/* 代码示例标签 */
+.code-examples {
+    margin-bottom: 20px;
+}
+
+.code-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.code-tab {
+    padding: 6px 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.code-tab:hover {
+    border-color: #ffa500;
+    color: #ffa500;
+}
+
+.code-tab.active {
+    background: rgba(255, 165, 0, 0.2);
+    border-color: #ffa500;
+    color: #ffa500;
+}
+
+.code-content {
+    position: relative;
+}
+
+.code-content .code-block {
+    background: var(--bg-darker);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-primary);
+    overflow-x: auto;
+    white-space: pre;
+    margin: 0;
+    max-height: 200px;
+}
+
+.btn-copy-code {
+    margin-top: 10px;
+}
+
+/* 代理注意事项 */
+.proxy-notes {
+    background: rgba(255, 165, 0, 0.05);
+    border-left: 3px solid #ffa500;
+    padding: 12px 16px;
+    border-radius: 4px;
+}
+
+.proxy-notes h4 {
+    color: #ffa500;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.proxy-notes ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.proxy-notes li {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.8;
+}
+
