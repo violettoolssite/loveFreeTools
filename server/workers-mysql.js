@@ -626,7 +626,101 @@ function getDnsInfoHTML(subdomain, domain, records) {
 }
 
 /**
- * 生成 CNAME 绑定成功页面 HTML
+ * 生成 CNAME 信息页面 HTML
+ */
+function getCnameInfoHTML(subdomain, domain, target) {
+  const fullDomain = `${subdomain}.${domain}`;
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${fullDomain} - CNAME 记录</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0a0e17 0%, #1a1f2e 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f1f5f9;
+    }
+    .container {
+      text-align: center;
+      padding: 40px;
+      max-width: 600px;
+    }
+    .icon { font-size: 48px; margin-bottom: 20px; }
+    h1 { font-size: 24px; margin-bottom: 15px; color: #00f5d4; }
+    .domain {
+      font-size: 18px;
+      color: #a78bfa;
+      margin-bottom: 20px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .info {
+      background: rgba(147, 51, 234, 0.1);
+      border: 1px solid rgba(147, 51, 234, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      text-align: left;
+    }
+    .record {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .record:last-child { border-bottom: none; }
+    .label { color: #94a3b8; }
+    .value { color: #00f5d4; font-family: monospace; }
+    .note {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 8px;
+      padding: 15px;
+      color: #fbbf24;
+      font-size: 14px;
+      text-align: left;
+    }
+    a { color: #00f5d4; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">&#128279;</div>
+    <h1>CNAME 记录已配置</h1>
+    <div class="domain">${fullDomain}</div>
+    <div class="info">
+      <div class="record">
+        <span class="label">记录类型</span>
+        <span class="value">CNAME</span>
+      </div>
+      <div class="record">
+        <span class="label">子域名</span>
+        <span class="value">${fullDomain}</span>
+      </div>
+      <div class="record">
+        <span class="label">指向目标</span>
+        <span class="value">${target}</span>
+      </div>
+    </div>
+    <div class="note">
+      <strong>说明：</strong>此页面表示 CNAME 记录已在公益平台注册。<br><br>
+      由于本服务通过 Cloudflare Worker 路由，实际访问需要用户在 Cloudflare DNS 中直接配置 CNAME 记录指向目标服务器。<br><br>
+      本服务主要支持 <strong>REDIRECT</strong> 类型（URL 跳转）。
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+/**
+ * 生成 CNAME 绑定成功页面 HTML（指向 workers.dev）
  */
 function getCnameSuccessHTML(subdomain, domain, target) {
   const fullDomain = `${subdomain}.${domain}`;
@@ -1748,33 +1842,13 @@ async function handleRequest(request, env) {
                 });
               
               case 'CNAME':
-                // 检查是否指向 Worker 自身（不需要代理）
-                const cnameTarget = record.value.toLowerCase();
-                if (cnameTarget.includes('workers.dev') || cnameTarget.includes('pages.dev')) {
-                  // 指向 Cloudflare Worker/Pages，显示绑定成功页面
-                  return new Response(getCnameSuccessHTML(subdomain, matchedDomain, record.value), {
-                    status: 200,
-                    headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' }
-                  });
-                }
-                
-                // CNAME 代理（反向代理到外部域名）
-                try {
-                  const targetUrl = new URL(url.pathname + url.search, `https://${record.value}`);
-                  const proxyResp = await fetch(targetUrl.toString(), {
-                    method: request.method,
-                    headers: request.headers
-                  });
-                  return new Response(proxyResp.body, {
-                    status: proxyResp.status,
-                    headers: proxyResp.headers
-                  });
-                } catch (proxyError) {
-                  return new Response(getDnsInfoHTML(subdomain, matchedDomain, dnsData.records), {
-                    status: 200,
-                    headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' }
-                  });
-                }
+                // CNAME 记录 - 显示绑定信息页面
+                // 注意：由于请求通过 Worker 路由，无法真正进行 DNS 级别的 CNAME 解析
+                // 用户需要在 Cloudflare 之外进行真正的 DNS 配置
+                return new Response(getCnameInfoHTML(subdomain, matchedDomain, record.value), {
+                  status: 200,
+                  headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' }
+                });
               
               case 'A':
               case 'AAAA':
