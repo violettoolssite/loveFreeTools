@@ -1058,14 +1058,37 @@ app.post('/api/dns', async (req, res) => {
             }
         }
         
-        // 创建记录
+        const fullDomain = subdomainLower === '@' ? domain : `${subdomainLower}.${domain}`;
+        let cfRecordId = null;
+        
+        // 对于 A, AAAA, CNAME 记录，同时在 Cloudflare 创建真实 DNS 记录
+        const cfSupportedTypes = ['A', 'AAAA', 'CNAME', 'TXT', 'MX'];
+        if (cfSupportedTypes.includes(typeUpper) && process.env.CF_DNS_API_TOKEN) {
+            try {
+                const cfDns = require('./cloudflare-dns');
+                const cfRecord = await cfDns.createDnsRecord(
+                    domain, 
+                    subdomainLower, 
+                    typeUpper, 
+                    value, 
+                    ttl, 
+                    false // 不开启 Cloudflare 代理，让用户直接访问目标服务器
+                );
+                cfRecordId = cfRecord.id;
+                console.log(`Cloudflare DNS 记录已创建: ${cfRecord.name} -> ${value} (ID: ${cfRecordId})`);
+            } catch (cfError) {
+                console.error('Cloudflare DNS 创建失败:', cfError.message);
+                // 如果 Cloudflare 创建失败，仍然继续在数据库创建记录（作为备份）
+            }
+        }
+        
+        // 创建数据库记录
         const [result] = await pool.query(
-            `INSERT INTO dns_records (subdomain, domain, record_type, record_value, ttl, priority, owner_email) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [subdomainLower, domain, typeUpper, value, ttl, priority, ownerEmail || null]
+            `INSERT INTO dns_records (subdomain, domain, record_type, record_value, ttl, priority, owner_email, cf_record_id) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [subdomainLower, domain, typeUpper, value, ttl, priority, ownerEmail || null, cfRecordId]
         );
         
-        const fullDomain = subdomainLower === '@' ? domain : `${subdomainLower}.${domain}`;
         console.log(`DNS 记录已创建: ${typeUpper} ${fullDomain} -> ${value}`);
         
         res.json({
@@ -1077,7 +1100,9 @@ app.post('/api/dns', async (req, res) => {
                 type: typeUpper,
                 value,
                 ttl,
-                priority
+                priority,
+                cfRecordId,
+                realDns: !!cfRecordId
             }
         });
     } catch (error) {
@@ -1135,11 +1160,32 @@ app.delete('/api/dns/:id', async (req, res) => {
     const { id } = req.params;
     
     try {
-        const [result] = await pool.query('DELETE FROM dns_records WHERE id = ?', [id]);
+        // 先获取记录信息（包含 Cloudflare 记录 ID）
+        const [records] = await pool.query(
+            'SELECT domain, cf_record_id FROM dns_records WHERE id = ?', 
+            [id]
+        );
         
-        if (result.affectedRows === 0) {
+        if (records.length === 0) {
             return res.status(404).json({ success: false, error: '记录不存在' });
         }
+        
+        const record = records[0];
+        
+        // 如果有 Cloudflare 记录，先删除
+        if (record.cf_record_id && process.env.CF_DNS_API_TOKEN) {
+            try {
+                const cfDns = require('./cloudflare-dns');
+                await cfDns.deleteDnsRecord(record.domain, record.cf_record_id);
+                console.log(`Cloudflare DNS 记录已删除: ${record.cf_record_id}`);
+            } catch (cfError) {
+                console.error('Cloudflare DNS 删除失败:', cfError.message);
+                // 继续删除数据库记录
+            }
+        }
+        
+        // 删除数据库记录
+        await pool.query('DELETE FROM dns_records WHERE id = ?', [id]);
         
         res.json({ success: true, message: '记录已删除' });
     } catch (error) {
