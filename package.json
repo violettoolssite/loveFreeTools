@@ -1,0 +1,28 @@
+{
+  "name": "love-free-tools",
+  "version": "1.0.0",
+  "description": "公益平台 - 免费临时邮箱、短链接、GitHub代理、文件加速、AI智能分析",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js",
+    "deploy:worker": "wrangler deploy",
+    "build:release": "node scripts/build-release.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/violettoolssite/loveFreeTools.git"
+  },
+  "keywords": [
+    "email",
+    "temporary-email",
+    "short-link",
+    "github-proxy",
+    "cloudflare-workers",
+    "ai"
+  ],
+  "author": "VioletTeam",
+  "license": "MIT",
+  "homepage": "https://free.violetteam.cloud"
+}
+
