@@ -4617,6 +4617,7 @@ body::after {
 
 /* ==================== 子域名面板 ==================== */
 
+/* 子域名面板按钮 */
 .subdomain-panel {
     background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
     border: 1px solid rgba(147, 51, 234, 0.3);
@@ -4630,10 +4631,71 @@ body::after {
     stroke: #a78bfa;
 }
 
+.btn-subdomain {
+    background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+    border: none;
+    color: white;
+}
+
+.btn-subdomain:hover {
+    background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%);
+}
+
+/* 子域名模态框 */
+.subdomain-modal {
+    max-width: 550px;
+    width: 95%;
+}
+
+.subdomain-modal .modal-title .icon {
+    stroke: #a78bfa;
+}
+
+.subdomain-info-box {
+    padding: 15px;
+    background: rgba(147, 51, 234, 0.1);
+    border: 1px solid rgba(147, 51, 234, 0.2);
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.subdomain-intro {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.subdomain-intro code {
+    background: rgba(147, 51, 234, 0.2);
+    color: #a78bfa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+}
+
+.form-section {
+    margin-bottom: 16px;
+}
+
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.form-hint {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
 .subdomain-input-group {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
 }
 
 .subdomain-input {
@@ -4671,37 +4733,10 @@ body::after {
 
 .subdomain-url-input {
     width: 100%;
-    padding: 10px 12px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(147, 51, 234, 0.3);
-    border-radius: 6px;
-    color: var(--text-primary);
-    font-size: 13px;
-    margin-bottom: 12px;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.subdomain-url-input:focus {
-    border-color: #a78bfa;
-}
-
-.subdomain-url-input::placeholder {
-    color: var(--text-muted);
-}
-
-.subdomain-panel .btn-primary {
-    background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
-    border: none;
-    color: white;
-}
-
-.subdomain-panel .btn-primary:hover {
-    background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%);
 }
 
 .subdomain-status {
-    margin-top: 8px;
+    margin-top: 6px;
     font-size: 12px;
     min-height: 18px;
 }
@@ -4721,6 +4756,197 @@ body::after {
 .subdomain-status .status-success {
     color: #a78bfa;
     font-family: var(--font-mono);
+}
+
+.subdomain-warning {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.subdomain-warning .icon {
+    width: 20px;
+    height: 20px;
+    stroke: var(--warning);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.subdomain-warning strong {
+    color: var(--warning);
+    font-size: 13px;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.subdomain-warning ul {
+    margin: 0;
+    padding-left: 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.subdomain-modal .btn-primary {
+    background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+    border: none;
+    color: white;
+}
+
+.subdomain-modal .btn-primary:hover {
+    background: linear-gradient(135deg, #a855f7 0%, #8b5cf6 100%);
+}
+
+.btn-lg {
+    padding: 14px 20px;
+    font-size: 15px;
+}
+
+/* 子域名结果 */
+.subdomain-result {
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.result-success {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--success);
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.result-success .icon {
+    width: 20px;
+    height: 20px;
+    stroke: var(--success);
+}
+
+.result-domain {
+    margin-bottom: 12px;
+}
+
+.result-domain a {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: #a78bfa;
+    text-decoration: none;
+}
+
+.result-domain a:hover {
+    text-decoration: underline;
+}
+
+.result-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* DNS 配置说明 */
+.dns-config-section {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.dns-config-section .config-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.dns-config-section .config-title .icon {
+    width: 18px;
+    height: 18px;
+    stroke: #a78bfa;
+}
+
+.dns-records {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dns-record {
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+}
+
+.dns-record-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.dns-type {
+    padding: 2px 8px;
+    background: rgba(147, 51, 234, 0.2);
+    color: #a78bfa;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.dns-name {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.dns-record-value {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dns-record-value code {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--primary);
+    background: rgba(0, 245, 212, 0.1);
+    padding: 6px 10px;
+    border-radius: 4px;
+    word-break: break-all;
+}
+
+.btn-copy-dns {
+    padding: 4px 8px;
+    font-size: 11px;
+    background: transparent;
+    border: 1px solid rgba(147, 51, 234, 0.3);
+    color: #a78bfa;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-copy-dns:hover {
+    background: rgba(147, 51, 234, 0.2);
+}
+
+.dns-note {
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
 }
 
 .loading-spinner {

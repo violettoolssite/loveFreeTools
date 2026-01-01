@@ -604,13 +604,49 @@ const App = {
             }
         }
 
-        // 子域名申请
+        // 子域名申请模态框
+        const subdomainModal = document.getElementById('subdomainModal');
+        const showSubdomainBtn = document.getElementById('showSubdomainBtn');
+        const closeSubdomainBtn = document.getElementById('closeSubdomainBtn');
         const createSubdomainBtn = document.getElementById('createSubdomainBtn');
         const subdomainInput = document.getElementById('subdomainInput');
         const subdomainTargetUrl = document.getElementById('subdomainTargetUrl');
+        const subdomainOwnerEmail = document.getElementById('subdomainOwnerEmail');
         const subdomainStatus = document.getElementById('subdomainStatus');
+        const subdomainResult = document.getElementById('subdomainResult');
+        const resultDomain = document.getElementById('resultDomain');
+        const copySubdomainBtn = document.getElementById('copySubdomainBtn');
+        const openSubdomainBtn = document.getElementById('openSubdomainBtn');
         
-        if (createSubdomainBtn) {
+        if (showSubdomainBtn && subdomainModal) {
+            // 打开模态框
+            showSubdomainBtn.addEventListener('click', () => {
+                subdomainModal.classList.add('active');
+                subdomainResult.style.display = 'none';
+            });
+            
+            // 关闭模态框
+            closeSubdomainBtn.addEventListener('click', () => {
+                subdomainModal.classList.remove('active');
+            });
+            
+            subdomainModal.addEventListener('click', (e) => {
+                if (e.target === subdomainModal) {
+                    subdomainModal.classList.remove('active');
+                }
+            });
+            
+            // 复制 DNS 值
+            document.querySelectorAll('.btn-copy-dns').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const value = btn.dataset.value;
+                    const success = await Utils.copyToClipboard(value);
+                    if (success) {
+                        this.showToast('success', '已复制', value);
+                    }
+                });
+            });
+            
             // 实时检查子域名可用性
             let checkTimer = null;
             if (subdomainInput) {
@@ -649,9 +685,11 @@ const App = {
                 });
             }
             
+            // 创建子域名
             createSubdomainBtn.addEventListener('click', async () => {
                 const subdomain = subdomainInput.value.toLowerCase().trim();
                 const targetUrl = subdomainTargetUrl.value.trim();
+                const ownerEmail = subdomainOwnerEmail ? subdomainOwnerEmail.value.trim() : '';
                 
                 if (!subdomain) {
                     this.showToast('error', '错误', '请输入子域名');
@@ -682,22 +720,37 @@ const App = {
                     const resp = await fetch(`${API_BASE}/api/subdomains`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ subdomain, targetUrl })
+                        body: JSON.stringify({ subdomain, targetUrl, ownerEmail })
                     });
                     
                     const data = await resp.json();
                     
                     if (data.success) {
-                        const fullDomain = `${subdomain}.yljdteam.com`;
-                        this.showToast('success', '申请成功', `子域名 ${fullDomain} 已创建`);
+                        const fullDomain = `https://${subdomain}.yljdteam.com`;
+                        this.showToast('success', '申请成功', `子域名已创建`);
+                        
+                        // 显示结果
+                        resultDomain.innerHTML = `<a href="${fullDomain}" target="_blank">${fullDomain}</a>`;
+                        subdomainResult.style.display = 'block';
                         
                         // 复制到剪贴板
-                        await Utils.copyToClipboard(`https://${fullDomain}`);
+                        await Utils.copyToClipboard(fullDomain);
                         
                         // 清空输入
                         subdomainInput.value = '';
                         subdomainTargetUrl.value = '';
-                        subdomainStatus.innerHTML = `<span class="status-success">https://${fullDomain} 已复制</span>`;
+                        if (subdomainOwnerEmail) subdomainOwnerEmail.value = '';
+                        subdomainStatus.innerHTML = '';
+                        
+                        // 绑定复制和打开按钮
+                        copySubdomainBtn.onclick = async () => {
+                            await Utils.copyToClipboard(fullDomain);
+                            this.showToast('success', '已复制', fullDomain);
+                        };
+                        
+                        openSubdomainBtn.onclick = () => {
+                            window.open(fullDomain, '_blank');
+                        };
                     } else {
                         this.showToast('error', '申请失败', data.error || '未知错误');
                         subdomainStatus.innerHTML = `<span class="status-error">${data.error}</span>`;
