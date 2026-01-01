@@ -1908,7 +1908,7 @@ async function handleRequest(request, env) {
                 });
               
               case 'CNAME':
-                // CNAME 代理 - 反向代理到目标域名
+                // CNAME 代理 - 通过香港服务器反向代理到目标域名
                 const cnameTarget = record.value.toLowerCase();
                 
                 // 如果指向 workers.dev/pages.dev，显示绑定成功页面
@@ -1919,33 +1919,31 @@ async function handleRequest(request, env) {
                   });
                 }
                 
-                // 尝试反向代理到目标域名
+                // 通过香港服务器代理
                 try {
-                  const targetUrl = new URL(url.pathname + url.search, `https://${record.value}`);
-                  
-                  // 创建新的请求头，修改 Host
-                  const proxyHeaders = new Headers(request.headers);
-                  proxyHeaders.set('Host', record.value);
-                  proxyHeaders.delete('cf-connecting-ip');
-                  proxyHeaders.delete('cf-ray');
+                  const proxyServer = 'http://35.220.142.223:8080'; // 香港服务器代理端口
+                  const targetPath = url.pathname + url.search;
+                  const proxyUrl = `${proxyServer}/proxy?target=${encodeURIComponent(record.value)}&path=${encodeURIComponent(targetPath)}`;
                   
                   const controller = new AbortController();
-                  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+                  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
                   
-                  const proxyResp = await fetch(targetUrl.toString(), {
+                  const proxyResp = await fetch(proxyUrl, {
                     method: request.method,
-                    headers: proxyHeaders,
+                    headers: {
+                      'X-Original-Host': `${subdomain}.${matchedDomain}`,
+                      'X-Target-Host': record.value,
+                      'User-Agent': request.headers.get('User-Agent') || 'FreeTools-Proxy'
+                    },
                     body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
-                    signal: controller.signal,
-                    redirect: 'follow'
+                    signal: controller.signal
                   });
                   
                   clearTimeout(timeoutId);
                   
-                  // 复制响应头
+                  // 复制响应
                   const responseHeaders = new Headers(proxyResp.headers);
-                  responseHeaders.set('X-Proxied-By', 'FreeTools-DNS');
-                  responseHeaders.set('X-Original-Host', record.value);
+                  responseHeaders.set('X-Proxied-By', 'FreeTools-CNAME');
                   
                   return new Response(proxyResp.body, {
                     status: proxyResp.status,
@@ -1953,7 +1951,6 @@ async function handleRequest(request, env) {
                   });
                 } catch (proxyError) {
                   console.error(`CNAME proxy error for ${subdomain}.${matchedDomain}:`, proxyError);
-                  // 代理失败，显示错误页面
                   return new Response(getCnameErrorHTML(subdomain, matchedDomain, record.value, proxyError.message), {
                     status: 502,
                     headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' }
