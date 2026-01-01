@@ -626,6 +626,104 @@ function getDnsInfoHTML(subdomain, domain, records) {
 }
 
 /**
+ * 生成 CNAME 绑定成功页面 HTML
+ */
+function getCnameSuccessHTML(subdomain, domain, target) {
+  const fullDomain = `${subdomain}.${domain}`;
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${fullDomain} - 域名已绑定</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0a0e17 0%, #1a1f2e 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #f1f5f9;
+    }
+    .container {
+      text-align: center;
+      padding: 40px;
+      max-width: 500px;
+    }
+    .icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-bottom: 15px;
+      color: #10b981;
+    }
+    .domain {
+      font-size: 20px;
+      color: #00f5d4;
+      margin-bottom: 20px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .info {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .info-title {
+      color: #10b981;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+    .info-text {
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .target {
+      font-family: 'JetBrains Mono', monospace;
+      color: #a78bfa;
+    }
+    .note {
+      color: #64748b;
+      font-size: 13px;
+      margin-top: 20px;
+    }
+    a {
+      color: #00f5d4;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">&#10004;</div>
+    <h1>域名绑定成功</h1>
+    <div class="domain">${fullDomain}</div>
+    <div class="info">
+      <div class="info-title">CNAME 记录已生效</div>
+      <div class="info-text">
+        该子域名已成功绑定到<br>
+        <span class="target">${target}</span>
+      </div>
+    </div>
+    <p class="note">
+      此页面由 <a href="https://free.violetteam.cloud">公益平台</a> 提供<br>
+      如需托管网站，请将 CNAME 指向您自己的服务器
+    </p>
+  </div>
+</body>
+</html>`;
+}
+
+/**
  * 生成子域名错误页面 HTML
  */
 function getSubdomainErrorHTML(subdomain, domain, errorMessage) {
@@ -1650,16 +1748,33 @@ async function handleRequest(request, env) {
                 });
               
               case 'CNAME':
-                // CNAME 代理（反向代理到目标域名）
-                const targetUrl = new URL(url.pathname + url.search, `https://${record.value}`);
-                const proxyResp = await fetch(targetUrl.toString(), {
-                  method: request.method,
-                  headers: request.headers
-                });
-                return new Response(proxyResp.body, {
-                  status: proxyResp.status,
-                  headers: proxyResp.headers
-                });
+                // 检查是否指向 Worker 自身（不需要代理）
+                const cnameTarget = record.value.toLowerCase();
+                if (cnameTarget.includes('workers.dev') || cnameTarget.includes('pages.dev')) {
+                  // 指向 Cloudflare Worker/Pages，显示绑定成功页面
+                  return new Response(getCnameSuccessHTML(subdomain, matchedDomain, record.value), {
+                    status: 200,
+                    headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' }
+                  });
+                }
+                
+                // CNAME 代理（反向代理到外部域名）
+                try {
+                  const targetUrl = new URL(url.pathname + url.search, `https://${record.value}`);
+                  const proxyResp = await fetch(targetUrl.toString(), {
+                    method: request.method,
+                    headers: request.headers
+                  });
+                  return new Response(proxyResp.body, {
+                    status: proxyResp.status,
+                    headers: proxyResp.headers
+                  });
+                } catch (proxyError) {
+                  return new Response(getDnsInfoHTML(subdomain, matchedDomain, dnsData.records), {
+                    status: 200,
+                    headers: { ...corsHeaders, 'Content-Type': 'text/html; charset=utf-8' }
+                  });
+                }
               
               case 'A':
               case 'AAAA':
