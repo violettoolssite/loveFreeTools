@@ -4437,12 +4437,25 @@ body::after {
     background: rgba(0, 0, 0, 0.3);
     border-radius: 6px;
     overflow-x: auto;
+    max-width: 100%;
 }
 
 .proxy-code {
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 10px;
     color: #ffa500;
     white-space: nowrap;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 代理面板与短链接面板高度同步 */
+.proxy-panel {
+    min-height: auto;
+}
+
+.proxy-panel .github-desc {
+    margin-bottom: 10px;
 }
 
