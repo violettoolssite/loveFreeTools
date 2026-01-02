@@ -1063,6 +1063,11 @@ app.post('/api/dns', async (req, res) => {
         
         // 对于 A, AAAA, CNAME 记录，同时在 Cloudflare 创建真实 DNS 记录
         const cfSupportedTypes = ['A', 'AAAA', 'CNAME', 'TXT', 'MX'];
+        // A 和 AAAA 记录开启 Cloudflare 代理（提供 SSL 和 DDoS 保护）
+        // CNAME 记录也开启代理
+        // TXT 和 MX 记录不能开启代理
+        const canProxy = ['A', 'AAAA', 'CNAME'].includes(typeUpper);
+        
         if (cfSupportedTypes.includes(typeUpper) && process.env.CF_DNS_API_TOKEN) {
             try {
                 const cfDns = require('./cloudflare-dns');
@@ -1071,11 +1076,11 @@ app.post('/api/dns', async (req, res) => {
                     subdomainLower, 
                     typeUpper, 
                     value, 
-                    ttl, 
-                    false // 不开启 Cloudflare 代理，让用户直接访问目标服务器
+                    canProxy ? 1 : ttl, // 代理模式下 TTL 自动设为 Auto (1)
+                    canProxy // 开启 Cloudflare 代理（橙色云朵），提供 SSL 和保护
                 );
                 cfRecordId = cfRecord.id;
-                console.log(`Cloudflare DNS 记录已创建: ${cfRecord.name} -> ${value} (ID: ${cfRecordId})`);
+                console.log(`Cloudflare DNS 记录已创建: ${cfRecord.name} -> ${value} (ID: ${cfRecordId}, Proxied: ${canProxy})`);
             } catch (cfError) {
                 console.error('Cloudflare DNS 创建失败:', cfError.message);
                 // 如果 Cloudflare 创建失败，仍然继续在数据库创建记录（作为备份）
