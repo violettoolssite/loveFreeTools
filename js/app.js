@@ -844,30 +844,50 @@ const App = {
                         </div>
                     `).join('');
                     
-                    // 绑定删除事件
+                    // 绑定删除事件 - 使用模态框输入密钥
                     dnsRecordsList.querySelectorAll('.delete-record-btn').forEach(btn => {
-                        btn.addEventListener('click', async (e) => {
+                        btn.addEventListener('click', (e) => {
                             const recordId = btn.dataset.id;
-                            const userKey = prompt('请输入管理密钥以删除此记录：');
-                            if (!userKey) return;
+                            const recordDomain = btn.closest('.dns-record-item').querySelector('.record-domain').textContent;
                             
-                            try {
-                                const resp = await fetch(`${EmailAPI.API_BASE}/api/dns/user/${recordId}`, {
+                            // 使用全局模态框函数
+                            if (typeof window.showDnsDeleteModal === 'function') {
+                                window.showDnsDeleteModal(recordId, recordDomain, async (userKey) => {
+                                    try {
+                                        const resp = await fetch(`${EmailAPI.API_BASE}/api/dns/user/${recordId}`, {
+                                            method: 'DELETE',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ userKey })
+                                        });
+                                        const result = await resp.json();
+                                        
+                                        if (result.success) {
+                                            EmailApp.showToast('success', '删除成功', '记录已删除');
+                                            loadDnsRecords(); // 刷新列表
+                                        } else {
+                                            EmailApp.showToast('error', '删除失败', result.error || '密钥错误');
+                                        }
+                                    } catch (error) {
+                                        console.error('删除失败:', error);
+                                        EmailApp.showToast('error', '删除失败', error.message);
+                                    }
+                                });
+                            } else {
+                                // 降级为 prompt
+                                const userKey = prompt('请输入管理密钥：');
+                                if (!userKey) return;
+                                fetch(`${EmailAPI.API_BASE}/api/dns/user/${recordId}`, {
                                     method: 'DELETE',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ userKey })
+                                }).then(r => r.json()).then(result => {
+                                    if (result.success) {
+                                        EmailApp.showToast('success', '删除成功', '记录已删除');
+                                        loadDnsRecords();
+                                    } else {
+                                        EmailApp.showToast('error', '删除失败', result.error);
+                                    }
                                 });
-                                const result = await resp.json();
-                                
-                                if (result.success) {
-                                    EmailApp.showToast('success', '删除成功', '记录已删除');
-                                    loadDnsRecords();
-                                } else {
-                                    EmailApp.showToast('error', '删除失败', result.error || '密钥错误');
-                                }
-                            } catch (error) {
-                                console.error('删除失败:', error);
-                                EmailApp.showToast('error', '删除失败', error.message);
                             }
                         });
                     });

@@ -1646,6 +1646,27 @@ func main() {
         </div>
     </div>
     
+    <!-- DNS 记录删除模态框 -->
+    <div class="modal-overlay" id="dnsDeleteModal">
+        <div class="modal admin-key-modal">
+            <div class="modal-header">
+                <h3 class="modal-title">删除 DNS 记录</h3>
+                <button class="modal-close" onclick="window.closeDnsDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-content">
+                <p class="admin-key-desc">确定要删除 <strong id="dnsDeleteDomain"></strong> 吗？</p>
+                <div class="form-group">
+                    <label class="form-label">管理密钥</label>
+                    <input type="password" id="dnsDeleteKeyInput" class="input" placeholder="输入创建时设置的密钥" onkeypress="if(event.key==='Enter')window.confirmDnsDelete()">
+                </div>
+                <div class="admin-key-actions">
+                    <button class="admin-cancel-btn" onclick="window.closeDnsDeleteModal()">取消</button>
+                    <button class="admin-confirm-btn" onclick="window.confirmDnsDelete()">确认删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- 管理员密钥验证模态框 -->
     <div class="modal-overlay" id="adminKeyModal">
         <div class="modal admin-key-modal">
@@ -1668,6 +1689,35 @@ func main() {
     </div>
     
     <script>
+        // DNS 记录删除模态框函数
+        window._dnsDeleteCallback = null;
+        
+        window.closeDnsDeleteModal = function() {
+            document.getElementById('dnsDeleteModal').classList.remove('active');
+        };
+        
+        window.confirmDnsDelete = function() {
+            var input = document.getElementById('dnsDeleteKeyInput');
+            var key = input.value.trim();
+            if (!key) {
+                alert('请输入管理密钥');
+                return;
+            }
+            window.closeDnsDeleteModal();
+            if (window._dnsDeleteCallback) {
+                window._dnsDeleteCallback(key);
+            }
+        };
+        
+        window.showDnsDeleteModal = function(recordId, domain, callback) {
+            window._dnsDeleteCallback = callback;
+            document.getElementById('dnsDeleteDomain').textContent = domain;
+            var input = document.getElementById('dnsDeleteKeyInput');
+            input.value = '';
+            document.getElementById('dnsDeleteModal').classList.add('active');
+            setTimeout(function() { input.focus(); }, 100);
+        };
+        
         // 全局管理员密钥模态框函数
         window._adminCallback = null;
         
