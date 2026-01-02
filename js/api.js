@@ -196,14 +196,7 @@ const EmailAPI = {
             throw new Error('无效的邮箱地址');
         }
 
-        const domain = parts[1];
-        const domainConfig = this.DOMAINS.find(d => d.name === domain);
-        
-        if (!domainConfig) {
-            throw new Error(`不支持的域名: ${domain}`);
-        }
-
-        // 统一使用 API_BASE（Nginx 反向代理），避免各域名 Worker 配置问题
+        // 统一使用 API_BASE（Nginx 反向代理），支持所有配置了 Email Routing 的域名
         const url = `${this.API_BASE}/api/emails/${encodeURIComponent(email)}`;
         
         try {
