@@ -1548,6 +1548,14 @@ func main() {
                                 <input type="email" id="dnsOwnerEmail" class="input" placeholder="your@email.com">
                             </div>
                         </div>
+                        
+                        <div class="dns-form-row">
+                            <div class="dns-form-group">
+                                <label class="form-label">管理密钥 <span class="required">*</span></label>
+                                <input type="password" id="dnsUserKey" class="input" placeholder="至少6位，用于管理记录" minlength="6" required>
+                                <span class="form-hint">请牢记此密钥，删除记录时需要验证</span>
+                            </div>
+                        </div>
 
                         <button class="btn btn-primary btn-block" id="createDnsBtn">
                             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

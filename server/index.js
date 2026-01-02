@@ -10,8 +10,14 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const mysql = require('mysql2/promise');
+const crypto = require('crypto');
 const { Resend } = require('resend');
 const UAParser = require('ua-parser-js');
+
+// 用户密钥哈希函数
+const hashUserKey = (key) => {
+    return crypto.createHash('sha256').update(key).digest('hex');
+};
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -975,7 +981,12 @@ app.get('/api/dns/:subdomain', async (req, res) => {
 
 // 创建 DNS 记录
 app.post('/api/dns', async (req, res) => {
-    const { subdomain, domain = 'lovefreetools.site', type, value, ttl = 3600, priority = 0, ownerEmail, proxied = true } = req.body;
+    const { subdomain, domain = 'lovefreetools.site', type, value, ttl = 3600, priority = 0, ownerEmail, proxied = true, userKey } = req.body;
+    
+    // 验证用户管理密钥
+    if (!userKey || userKey.length < 6) {
+        return res.status(400).json({ success: false, error: '请输入至少6位的管理密钥' });
+    }
     
     // 验证域名
     const allowedDomains = ['lovefreetools.site', 'violet27team.xyz'];
@@ -1086,11 +1097,12 @@ app.post('/api/dns', async (req, res) => {
             }
         }
         
-        // 创建数据库记录
+        // 创建数据库记录（包含用户密钥哈希）
+        const userKeyHash = hashUserKey(userKey);
         const [result] = await pool.query(
-            `INSERT INTO dns_records (subdomain, domain, record_type, record_value, ttl, priority, owner_email, cf_record_id) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [subdomainLower, domain, typeUpper, value, ttl, priority, ownerEmail || null, cfRecordId]
+            `INSERT INTO dns_records (subdomain, domain, record_type, record_value, ttl, priority, owner_email, user_key_hash, cf_record_id) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [subdomainLower, domain, typeUpper, value, ttl, priority, ownerEmail || null, userKeyHash, cfRecordId]
         );
         
         console.log(`DNS 记录已创建: ${typeUpper} ${fullDomain} -> ${value}`);
@@ -1114,6 +1126,52 @@ app.post('/api/dns', async (req, res) => {
             return res.status(400).json({ success: false, error: '该 DNS 记录已存在' });
         }
         console.error('创建 DNS 记录失败:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// 用户删除 DNS 记录（需验证用户密钥）
+app.delete('/api/dns/user/:id', async (req, res) => {
+    const { id } = req.params;
+    const { userKey } = req.body;
+    
+    if (!userKey) {
+        return res.status(400).json({ success: false, error: '请提供管理密钥' });
+    }
+    
+    try {
+        // 获取记录并验证密钥
+        const [records] = await pool.query('SELECT * FROM dns_records WHERE id = ?', [id]);
+        
+        if (records.length === 0) {
+            return res.status(404).json({ success: false, error: '记录不存在' });
+        }
+        
+        const record = records[0];
+        const userKeyHash = hashUserKey(userKey);
+        
+        if (record.user_key_hash !== userKeyHash) {
+            return res.status(403).json({ success: false, error: '管理密钥错误' });
+        }
+        
+        // 如果有 Cloudflare 记录，先删除
+        if (record.cf_record_id && process.env.CF_DNS_API_TOKEN) {
+            try {
+                const cfDns = require('./cloudflare-dns');
+                await cfDns.deleteDnsRecord(record.domain, record.cf_record_id);
+                console.log(`Cloudflare DNS 记录已删除: ${record.cf_record_id}`);
+            } catch (cfError) {
+                console.error('Cloudflare DNS 删除失败:', cfError.message);
+            }
+        }
+        
+        // 删除数据库记录
+        await pool.query('DELETE FROM dns_records WHERE id = ?', [id]);
+        
+        console.log(`DNS 记录已删除: ID ${id}`);
+        res.json({ success: true, message: '记录已删除' });
+    } catch (error) {
+        console.error('删除 DNS 记录失败:', error);
         res.status(500).json({ success: false, error: error.message });
     }
 });

@@ -750,9 +750,16 @@ const App = {
                 const priority = parseInt(dnsPriority.value) || 0;
                 const ownerEmail = dnsOwnerEmail ? dnsOwnerEmail.value.trim() : '';
                 const proxied = dnsProxied ? dnsProxied.checked : true;
+                const dnsUserKey = document.getElementById('dnsUserKey');
+                const userKey = dnsUserKey ? dnsUserKey.value : '';
                 
                 if (!value) {
                     this.showToast('error', '错误', '请输入记录值');
+                    return;
+                }
+                
+                if (!userKey || userKey.length < 6) {
+                    this.showToast('error', '错误', '请输入至少6位的管理密钥');
                     return;
                 }
                 
@@ -763,7 +770,7 @@ const App = {
                     const resp = await fetch(`${EmailAPI.API_BASE}/api/dns`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ subdomain, domain, type, value, ttl, priority, ownerEmail, proxied })
+                        body: JSON.stringify({ subdomain, domain, type, value, ttl, priority, ownerEmail, proxied, userKey })
                     });
                     
                     const data = await resp.json();
@@ -823,14 +830,47 @@ const App = {
                 
                 if (data.success && data.records && data.records.length > 0) {
                     dnsRecordsList.innerHTML = data.records.map(record => `
-                        <div class="dns-record-item">
+                        <div class="dns-record-item" data-record-id="${record.id}">
                             <span class="record-status ${record.realDns ? 'real-dns' : 'local-only'}" 
                                   title="${record.realDns ? 'Cloudflare DNS 已生效' : '仅本地记录'}"></span>
                             <span class="record-type-badge type-${record.type.toLowerCase()}">${record.type}</span>
                             <span class="record-domain" title="${record.fullDomain}">${record.fullDomain}</span>
                             <span class="record-value" title="${record.value}">${record.value}</span>
+                            <button class="delete-record-btn" data-id="${record.id}" title="删除记录">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                            </button>
                         </div>
                     `).join('');
+                    
+                    // 绑定删除事件
+                    dnsRecordsList.querySelectorAll('.delete-record-btn').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            const recordId = btn.dataset.id;
+                            const userKey = prompt('请输入管理密钥以删除此记录：');
+                            if (!userKey) return;
+                            
+                            try {
+                                const resp = await fetch(`${EmailAPI.API_BASE}/api/dns/user/${recordId}`, {
+                                    method: 'DELETE',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ userKey })
+                                });
+                                const result = await resp.json();
+                                
+                                if (result.success) {
+                                    EmailApp.showToast('success', '删除成功', '记录已删除');
+                                    loadDnsRecords();
+                                } else {
+                                    EmailApp.showToast('error', '删除失败', result.error || '密钥错误');
+                                }
+                            } catch (error) {
+                                console.error('删除失败:', error);
+                                EmailApp.showToast('error', '删除失败', error.message);
+                            }
+                        });
+                    });
                 } else {
                     dnsRecordsList.innerHTML = '<div class="no-records">暂无记录</div>';
                 }
