@@ -88,11 +88,15 @@ const EmailAPI = {
     /**
      * 删除域名
      */
-    async deleteDomain(name) {
+    async deleteDomain(name, adminKey) {
         try {
+            const headers = {};
+            if (adminKey) {
+                headers['X-Admin-Key'] = adminKey;
+            }
             const response = await this.fetchWithTimeout(`${this.API_BASE}/api/domains/${encodeURIComponent(name)}`, {
                 method: 'DELETE',
-                headers: {}
+                headers
             });
             const data = await response.json();
             if (data.success) {

@@ -5020,6 +5020,42 @@ body::after {
     color: #ef4444;
 }
 
+/* 管理员密钥模态框 */
+.admin-key-modal {
+    max-width: 400px;
+}
+
+.admin-key-desc {
+    color: #94a3b8;
+    margin-bottom: 20px;
+}
+
+.admin-key-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.btn-secondary {
+    background: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+    border: 1px solid rgba(100, 116, 139, 0.3);
+}
+
+.btn-secondary:hover {
+    background: rgba(100, 116, 139, 0.3);
+}
+
 .subdomain-url-input {
     width: 100%;
 }

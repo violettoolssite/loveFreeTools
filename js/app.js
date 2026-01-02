@@ -1986,31 +1986,78 @@ const App = {
     },
 
     /**
-     * 从列表中删除域名
+     * 从列表中删除域名（显示管理员密钥模态框）
      */
     async deleteDomainFromList(name) {
-        // workers.dev 子域名直接删除，无需确认
-        const isWorkersDev = name.endsWith('.workers.dev');
-        
-        if (!isWorkersDev) {
-            // 非 workers.dev 域名需要验证 API 是否失效
-            const domainConfig = EmailAPI.DOMAINS.find(d => d.name === name);
-            if (domainConfig) {
-                this.showToast('info', '检测中', `正在验证 ${name} 的 API 状态...`);
-                
-                const isValid = await this.verifyDomainApi(domainConfig.api);
-                
-                if (isValid) {
-                    this.showToast('error', '无法删除', '该域名 API 仍在正常运行，无法删除正常运行的域名');
-                    return;
+        // 显示管理员密钥模态框
+        this.showAdminKeyModal(name, async (adminKey) => {
+            try {
+                const result = await EmailAPI.deleteDomain(name, adminKey);
+
+                if (result.success) {
+                    this.renderCurrentDomainsList();
+                    this.renderDomainSelector();
+                    this.showToast('success', '删除成功', `域名 ${name} 已删除`);
+                } else {
+                    this.showToast('error', '删除失败', result.error || '未知错误');
                 }
+            } catch (e) {
+                this.showToast('error', '删除失败', e.message);
             }
-            
-            if (!confirm(`域名 ${name} 的 API 已失效，确定要删除吗？`)) {
+        });
+    },
+    
+    /**
+     * 显示管理员密钥模态框
+     */
+    showAdminKeyModal(domainName, callback) {
+        const modal = document.getElementById('adminKeyModal');
+        const input = document.getElementById('adminKeyInput');
+        const confirmBtn = document.getElementById('confirmAdminKeyBtn');
+        const cancelBtn = document.getElementById('cancelAdminKeyBtn');
+        const closeBtn = document.getElementById('closeAdminKeyModal');
+        
+        if (!modal) return;
+        
+        input.value = '';
+        modal.classList.add('active');
+        input.focus();
+        
+        const closeModal = () => {
+            modal.classList.remove('active');
+        };
+        
+        const handleConfirm = () => {
+            const adminKey = input.value.trim();
+            if (!adminKey) {
+                this.showToast('error', '错误', '请输入管理员密钥');
                 return;
             }
-        }
-
+            closeModal();
+            callback(adminKey);
+        };
+        
+        // 清除旧事件监听器
+        const newConfirmBtn = confirmBtn.cloneNode(true);
+        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+        const newCancelBtn = cancelBtn.cloneNode(true);
+        cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
+        const newCloseBtn = closeBtn.cloneNode(true);
+        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+        
+        newConfirmBtn.addEventListener('click', handleConfirm);
+        newCancelBtn.addEventListener('click', closeModal);
+        newCloseBtn.addEventListener('click', closeModal);
+        
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleConfirm();
+        });
+    },
+    
+    /**
+     * 旧的删除逻辑（已废弃）
+     */
+    async _deleteDomainFromListOld(name) {
         try {
             const result = await EmailAPI.deleteDomain(name);
 
@@ -4484,23 +4531,26 @@ const Admin = {
 
     async deleteDomain(name) {
         if (this.isLoading) return;
-        this.isLoading = true;
-
-        try {
-            const result = await EmailAPI.deleteDomain(name);
-            
-            if (result.success) {
-                await this.renderDomainList();
-                App.renderDomainSelector();
-                App.showToast('success', '成功', `已删除域名 ${name}`);
-            } else {
-                App.showToast('error', '错误', result.error || '删除失败');
+        
+        // 显示管理员密钥模态框
+        App.showAdminKeyModal(name, async (adminKey) => {
+            this.isLoading = true;
+            try {
+                const result = await EmailAPI.deleteDomain(name, adminKey);
+                
+                if (result.success) {
+                    await this.renderDomainList();
+                    App.renderDomainSelector();
+                    App.showToast('success', '成功', `已删除域名 ${name}`);
+                } else {
+                    App.showToast('error', '错误', result.error || '删除失败');
+                }
+            } catch (e) {
+                App.showToast('error', '错误', e.message);
+            } finally {
+                this.isLoading = false;
             }
-        } catch (e) {
-            App.showToast('error', '错误', e.message);
-        } finally {
-            this.isLoading = false;
-        }
+        });
     },
 
     async renderDomainList() {
