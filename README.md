@@ -1,6 +1,6 @@
 # Love Free Tools - 公益平台
 
-一个基于 Cloudflare Workers 和 Node.js 的免费公益服务平台，提供临时邮箱、短链接生成、GitHub 代理、文件加速下载等功能，集成 AI 智能分析能力。
+一个基于 Cloudflare Workers 和 Node.js 的免费公益服务平台，提供临时邮箱、短链接生成、GitHub 代理、文件加速下载、免费子域名、HTTP 代理等功能，集成 AI 智能分析能力。
 
 ## 在线演示
 
@@ -10,10 +10,11 @@
 |------|------|------|
 | 前端主页 | https://free.violetteam.cloud | 临时邮箱服务主页面 |
 | 文件加速 | https://download.qxfy.store/proxy/?url={URL} | 文件下载加速 |
+| GitHub 仓库 | https://github.com/violettoolssite/loveFreeTools | 项目源代码 |
 
 ### 多域名支持
 
-本平台支持多个域名，每个域名都提供完整的服务功能。你可以使用任意域名进行以下操作：
+本平台支持多个域名，每个域名都提供完整的服务功能：
 
 | 功能 | 使用方式 | 示例 |
 |------|----------|------|
@@ -35,6 +36,7 @@
 | loginvipcursor.icu | 可用 |
 | qxfy.store | 可用 |
 | violetteam.cloud | 可用 |
+| violetfreecursor.site | 可用 |
 
 所有域名共享同一后端数据库，邮件和短链接数据在所有域名间互通。
 
@@ -87,6 +89,7 @@ AI 模型配置：
 - **点击统计**：记录短链接访问次数
 - **过期时间**：可设置链接有效期
 - **安全检测**：AI 分析目标链接安全性
+- **安全风险提示**：创建时显示法律和安全风险警告
 
 ### 4. GitHub 代理加速
 
@@ -113,11 +116,12 @@ AI 模型配置：
 - **Cloudflare 代理**：A/AAAA/CNAME 记录可开启 Cloudflare CDN 加速
 - **用户密钥管理**：每条记录绑定用户密钥，自主管理删除
 - **实时 DNS**：通过 Cloudflare API 创建真实 DNS 记录
+- **记录列表**：显示所有已注册子域名（值已脱敏）
 
 使用方式：
 1. 在前端点击"申请子域名"
 2. 输入子域名、选择域名、配置记录类型和值
-3. 设置管理密钥（用于后续删除）
+3. 设置管理密钥（至少 6 位，用于后续删除）
 4. 点击添加记录
 
 ### 7. 免费 HTTP 代理
@@ -174,9 +178,10 @@ AI 模型配置：
 |------|------|
 | Cloudflare Worker | 处理邮件接收、API 路由、GitHub 代理、文件加速 |
 | Node.js Backend | RESTful API 服务，处理数据存储和业务逻辑 |
-| MySQL Database | 存储邮件、短链接、域名等数据 |
+| MySQL Database | 存储邮件、短链接、域名、DNS 记录等数据 |
 | Cloudflare Workers AI | 主 AI 服务，处理邮件分析 |
 | ModelScope API | 备用 AI 服务，Cloudflare AI 失败时自动切换 |
+| Cloudflare DNS API | 管理子域名 DNS 记录 |
 
 ## 部署指南
 
@@ -205,6 +210,9 @@ SOURCE server/database-upgrade-ai.sql;
 
 # 添加短链接表
 SOURCE server/create-short-links-table.sql;
+
+# 添加 DNS 记录表
+SOURCE server/create-dns-records-table.sql;
 ```
 
 ### 步骤 2：部署后端服务
@@ -218,7 +226,7 @@ npm install
 
 # 配置环境变量
 cp env.example.txt .env
-# 编辑 .env 文件，填写数据库连接信息和 Resend API Key
+# 编辑 .env 文件，填写数据库连接信息和 API Key
 
 # 启动服务
 pm2 start index.js --name free-email-api
@@ -230,17 +238,17 @@ pm2 startup
 
 环境变量说明：
 
-| 变量名 | 说明 | 示例 |
-|--------|------|------|
-| DB_HOST | 数据库主机 | localhost |
-| DB_USER | 数据库用户 | root |
-| DB_PASSWORD | 数据库密码 | your_password |
-| DB_NAME | 数据库名 | free_email |
-| RESEND_API_KEY | Resend 邮件发送 API Key | re_xxx |
-| ADMIN_KEY | 管理员密钥 | your_admin_key |
-| CF_DNS_API_TOKEN | Cloudflare DNS API Token | xxx |
-| CF_ZONE_LOVEFREETOOLS | lovefreetools.site Zone ID | xxx |
-| CF_ZONE_VIOLET27TEAM | violet27team.xyz Zone ID | xxx |
+| 变量名 | 必需 | 说明 | 示例 |
+|--------|------|------|------|
+| DB_HOST | 是 | 数据库主机 | localhost |
+| DB_USER | 是 | 数据库用户 | root |
+| DB_PASSWORD | 是 | 数据库密码 | your_password |
+| DB_NAME | 是 | 数据库名 | free_email |
+| RESEND_API_KEY | 是 | Resend 邮件发送 API Key | re_xxx |
+| ADMIN_KEY | 是 | 管理员密钥 | your_admin_key |
+| CF_DNS_API_TOKEN | 否 | Cloudflare DNS API Token | xxx |
+| CF_ZONE_LOVEFREETOOLS | 否 | lovefreetools.site Zone ID | xxx |
+| CF_ZONE_VIOLET27TEAM | 否 | violet27team.xyz Zone ID | xxx |
 
 ### 步骤 3：配置 Nginx 反向代理
 
@@ -279,7 +287,7 @@ server {
 
 ### 步骤 6：部署前端
 
-**方式 A：Cloudflare Pages**
+**方式 A：Cloudflare Pages（推荐）**
 
 1. 将代码推送到 GitHub
 2. 在 Cloudflare Pages 中连接仓库
@@ -297,74 +305,24 @@ server {
 
 ## Cloudflare Git 同步部署
 
-通过将 Cloudflare Worker 连接到 Git 仓库，可以实现代码推送后自动构建和部署，无需手动复制粘贴代码。
+通过将 Cloudflare Worker 连接到 Git 仓库，可以实现代码推送后自动构建和部署。
 
-### 前置要求
-
-- GitHub 仓库（本项目已托管在 https://github.com/violettoolssite/loveFreeTools）
-- Cloudflare 账户
-- 已有的 Worker（或新建一个）
-
-### 步骤 1：进入 Worker 设置
+### 配置步骤
 
 1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)
-2. 进入 **Workers & Pages**
-3. 点击你的 Worker（如 `login`）
-4. 进入 **Settings** 选项卡
-5. 找到 **Build** 部分，点击 **Connect to Git**
+2. 进入 **Workers & Pages** -> 你的 Worker -> **Settings** -> **Build**
+3. 点击 **Connect to Git**，选择 GitHub
+4. 选择仓库：`violettoolssite/loveFreeTools`
+5. 配置构建设置：
 
-### 步骤 2：连接 Git 仓库
+| 配置项 | 值 |
+|--------|-----|
+| 构建命令 | 留空 |
+| 部署命令 | `npx wrangler deploy` |
+| 根目录 | `/` |
+| 生产分支 | `main` |
 
-1. 选择 **GitHub** 作为 Git 提供商
-2. 点击 **Connect GitHub**，授权 Cloudflare 访问你的 GitHub 账户
-3. 选择仓库：`violettoolssite/loveFreeTools`
-4. 点击 **Begin Setup**
-
-### 步骤 3：配置构建设置
-
-在构建配置页面，设置以下参数：
-
-| 配置项 | 值 | 说明 |
-|--------|-----|------|
-| 构建命令 | 留空 | 本项目无需构建步骤 |
-| 部署命令 | `npx wrangler deploy` | 使用 Wrangler CLI 部署 |
-| 版本命令 | `npx wrangler versions upload` | 上传版本信息 |
-| 根目录 | `/` | 项目根目录 |
-| 生产分支 | `main` | 主分支 |
-| 非生产分支构建 | 已启用 | 其他分支也会触发构建 |
-
-### 步骤 4：配置构建监视路径
-
-设置哪些文件变更会触发重新构建：
-
-- **包括路径**: `*`（监视所有文件）
-- 或者只监视 Worker 相关文件：`server/workers-mysql.js`, `wrangler.toml`
-
-### 步骤 5：配置 API 令牌
-
-Cloudflare 会自动创建一个 API 令牌用于部署：
-
-- **令牌名称**: 自动生成（如 `loveFreeTools build token`）
-- 该令牌具有部署 Worker 所需的最小权限
-
-### 步骤 6：保存并测试
-
-1. 点击 **Save and Deploy**
-2. Cloudflare 会立即触发第一次构建
-3. 查看构建日志确认部署成功
-
-### 验证部署
-
-构建完成后，检查以下内容：
-
-1. **Worker 代码**：进入 Worker 编辑器，确认代码已更新
-2. **环境变量**：确保 `API_BASE`、`ADMIN_KEY` 等变量已配置
-3. **AI 绑定**：确保 `AI` 绑定已添加
-4. **功能测试**：访问 Worker 域名，测试 API 是否正常
-
-### wrangler.toml 配置说明
-
-项目根目录的 `wrangler.toml` 文件定义了 Worker 配置：
+### wrangler.toml 配置
 
 ```toml
 name = "login"                    # Worker 名称
@@ -372,14 +330,7 @@ main = "server/workers-mysql.js"  # 入口文件路径
 compatibility_date = "2024-01-01" # 兼容性日期
 ```
 
-重要说明：
-- `name` 必须与 Cloudflare Dashboard 中的 Worker 名称一致
-- `main` 指向 Worker 入口文件
-- 环境变量和绑定需要在 Dashboard 中配置，不在此文件中设置
-
-### 后续更新流程
-
-配置完成后，每次推送代码到 GitHub 会自动触发部署：
+### 自动部署流程
 
 ```bash
 # 修改代码后
@@ -387,43 +338,8 @@ git add .
 git commit -m "Update feature"
 git push origin main
 
-# Cloudflare 会自动：
-# 1. 检测到新提交
-# 2. 执行 npx wrangler deploy
-# 3. 部署新版本到 Worker
+# Cloudflare 会自动部署新版本
 ```
-
-### 查看构建历史
-
-1. 进入 Worker -> Settings -> Build
-2. 点击 **View build history**
-3. 可以查看每次构建的日志、状态和持续时间
-
-### 回滚版本
-
-如果新版本有问题，可以快速回滚：
-
-1. 进入 Worker -> Deployments
-2. 找到之前的正常版本
-3. 点击 **Rollback to this version**
-
-### 常见问题
-
-**Q: 构建失败，提示找不到 wrangler**
-
-A: 确保项目根目录有 `wrangler.toml` 文件，Cloudflare 会自动安装 wrangler。
-
-**Q: 部署成功但功能不正常**
-
-A: 检查环境变量是否配置正确，特别是 `API_BASE` 和 `ADMIN_KEY`。
-
-**Q: 如何暂停自动部署**
-
-A: 进入 Worker -> Settings -> Build，点击 **Pause builds**。
-
-**Q: 如何断开 Git 连接**
-
-A: 进入 Worker -> Settings -> Build，点击 **Disconnect from Git**。
 
 ## API 文档
 
@@ -463,33 +379,19 @@ GET /api/emails/:email
 }
 ```
 
-#### 删除邮件
-
-```
-DELETE /api/emails/:email/:id
-```
-
 ### 短链接 API
 
 #### 创建短链接
 
 ```
 POST /api/links
-```
+Content-Type: application/json
 
-请求体：
-```json
 {
   "url": "https://example.com/very-long-url",
   "code": "custom",
   "expiresIn": 7
 }
-```
-
-#### 获取短链接信息
-
-```
-GET /api/links/:code
 ```
 
 #### 短链接跳转
@@ -547,6 +449,41 @@ Content-Type: application/json
 }
 ```
 
+### DNS 记录 API
+
+#### 获取所有 DNS 记录
+
+```
+GET /api/dns/all
+```
+
+#### 创建 DNS 记录
+
+```
+POST /api/dns
+Content-Type: application/json
+
+{
+  "subdomain": "test",
+  "domain": "lovefreetools.site",
+  "type": "A",
+  "value": "1.2.3.4",
+  "proxied": true,
+  "userKey": "your_key"
+}
+```
+
+#### 删除 DNS 记录
+
+```
+DELETE /api/dns/user/:id
+Content-Type: application/json
+
+{
+  "userKey": "your_key"
+}
+```
+
 ### 域名管理 API
 
 需要管理员密钥（通过 X-Admin-Key 请求头传递）
@@ -577,39 +514,6 @@ DELETE /api/domains/:name
 X-Admin-Key: your_admin_key
 ```
 
-### 发送邮件 API
-
-```
-POST /api/send-email
-Content-Type: application/json
-
-{
-  "from": "sender@yourdomain.com",
-  "to": "recipient@example.com",
-  "subject": "Test Email",
-  "text": "Plain text content",
-  "html": "<p>HTML content</p>"
-}
-```
-
-## 配置说明
-
-### Worker 环境变量
-
-| 变量名 | 必需 | 说明 |
-|--------|------|------|
-| API_BASE | 是 | 后端 API 地址 |
-| ADMIN_KEY | 是 | 管理员密钥 |
-| MODELSCOPE_KEY | 否 | ModelScope API Key（AI 备用） |
-| AI_ENABLED | 否 | AI 功能开关（默认 true） |
-
-### Worker 绑定
-
-| 绑定名称 | 类型 | 说明 |
-|----------|------|------|
-| AI | Workers AI | AI 模型绑定 |
-| EMAILS_KV | KV Namespace | 可选，用于缓存 |
-
 ## 文件结构
 
 ```
@@ -618,9 +522,15 @@ loveFreeTools/
 ├── privacy.html                  # 隐私政策页面
 ├── terms.html                    # 服务条款页面
 ├── favicon.svg                   # 网站图标
+├── package.json                  # 项目配置
+├── wrangler.toml                 # Wrangler CLI 配置
+├── workers-download.js           # 文件下载代理 Worker
+├── LICENSE                       # MIT 许可证
+├── README.md                     # 项目说明文档
+├── CHANGELOG.md                  # 更新日志
 ├── _headers                      # Cloudflare Pages HTTP 头配置
 ├── _redirects                    # Cloudflare Pages 重定向规则
-├── README.md                     # 项目说明文档
+├── .gitignore                    # Git 忽略文件
 │
 ├── css/
 │   └── style.css                 # 样式文件
@@ -643,14 +553,24 @@ loveFreeTools/
 │   ├── update-server.sh          # 服务器更新脚本
 │   └── DEPLOY.md                 # 部署文档
 │
-├── workers-download.js           # 文件下载代理 Worker
-├── wrangler.toml                 # Wrangler CLI 配置
-├── .gitignore                    # Git 忽略文件
+├── proxy-server/
+│   ├── install-tinyproxy.sh      # TinyProxy 安装脚本
+│   ├── test_proxy.py             # 代理测试脚本
+│   └── README.md                 # 代理服务部署文档
 │
-└── proxy-server/
-    ├── install-tinyproxy.sh      # TinyProxy 安装脚本
-    ├── test_proxy.py             # 代理测试脚本
-    └── README.md                 # 代理服务部署文档
+├── electron/
+│   ├── main.js                   # Electron 主进程
+│   ├── package.json              # Electron 配置
+│   ├── build.bat                 # Windows 打包脚本
+│   ├── icon.ico                  # 应用图标
+│   ├── icon.svg                  # SVG 图标
+│   └── RELEASE_NOTES.md          # 桌面版发布说明
+│
+├── scripts/
+│   └── build-release.js          # 发布包构建脚本
+│
+└── release/
+    └── love-free-tools-v1.0.0/   # 发布包
 ```
 
 ## 技术栈
@@ -667,6 +587,7 @@ loveFreeTools/
 - Node.js + Express.js
 - MySQL 数据库
 - Resend API（邮件发送）
+- Cloudflare DNS API（子域名管理）
 
 ### 边缘计算
 
@@ -688,16 +609,28 @@ loveFreeTools/
    - 不存储任何敏感信息到客户端
 
 2. **短链接安全**
-   - 创建短链接时显示安全风险提示
+   - 创建短链接时显示安全风险和法律风险提示
    - AI 自动分析目标链接安全性
    - 支持链接过期时间设置
+   - 禁止用于钓鱼、诈骗、恶意软件传播
 
-3. **API 安全**
+3. **子域名安全**
+   - 用户需对子域名指向的内容承担法律责任
+   - 禁止用于非法内容
+   - 用户密钥以 SHA256 哈希存储
+   - 管理员可配合执法机关提供信息
+
+4. **代理安全**
+   - 仅供学习研究和合法爬虫使用
+   - 禁止用于攻击、DDoS、非法抓取
+   - 可能记录访问日志
+
+5. **API 安全**
    - 管理员操作需要密钥验证
    - CORS 配置限制跨域请求
    - 请求频率限制
 
-4. **数据安全**
+6. **数据安全**
    - 数据库连接使用 SSL
    - 敏感配置通过环境变量管理
    - 定期自动清理过期数据
@@ -709,6 +642,7 @@ loveFreeTools/
 3. 每个邮箱最多保留 50 封邮件
 4. 短链接服务可能被滥用，请谨慎使用
 5. AI 分析功能有每日免费额度限制
+6. HTTP 代理带宽有限，请勿滥用
 
 ## 许可证
 
@@ -717,3 +651,10 @@ MIT License
 Copyright (c) 2025 VioletTeam
 
 详见 [LICENSE](LICENSE) 文件。
+
+## 贡献
+
+欢迎提交 Issue 和 Pull Request。
+
+- GitHub: https://github.com/violettoolssite/loveFreeTools
+- 联系邮箱: chf@yljdteam.com
