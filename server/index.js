@@ -1198,6 +1198,62 @@ app.delete('/api/dns/:id', async (req, res) => {
     }
 });
 
+// 获取所有 DNS 记录（公开，值部分隐藏）
+app.get('/api/dns/public/list', async (req, res) => {
+    try {
+        const [rows] = await pool.query(
+            `SELECT id, subdomain, domain, record_type, record_value, ttl, created_at,
+                    CASE WHEN cf_record_id IS NOT NULL THEN TRUE ELSE FALSE END as real_dns
+             FROM dns_records 
+             WHERE is_active = TRUE 
+             ORDER BY created_at DESC 
+             LIMIT 100`
+        );
+        
+        // 隐藏部分值
+        const maskValue = (value, type) => {
+            if (!value) return '***';
+            if (type === 'TXT') {
+                // TXT 记录显示前10个字符
+                return value.length > 10 ? value.substring(0, 10) + '...' : value;
+            }
+            if (type === 'A' || type === 'AAAA') {
+                // IP 地址隐藏中间部分
+                const parts = value.split('.');
+                if (parts.length === 4) {
+                    return `${parts[0]}.***.***.${parts[3]}`;
+                }
+                return value.substring(0, 4) + '***';
+            }
+            if (type === 'CNAME' || type === 'REDIRECT') {
+                // 域名隐藏中间部分
+                if (value.length > 15) {
+                    return value.substring(0, 6) + '***' + value.substring(value.length - 6);
+                }
+                return value.substring(0, 3) + '***';
+            }
+            return value.length > 8 ? value.substring(0, 4) + '***' : '***';
+        };
+        
+        const records = rows.map(row => ({
+            id: row.id,
+            subdomain: row.subdomain,
+            domain: row.domain,
+            fullDomain: row.subdomain === '@' ? row.domain : `${row.subdomain}.${row.domain}`,
+            type: row.record_type,
+            value: maskValue(row.record_value, row.record_type),
+            ttl: row.ttl,
+            realDns: row.real_dns,
+            createdAt: row.created_at
+        }));
+        
+        res.json({ success: true, records, total: records.length });
+    } catch (error) {
+        console.error('获取 DNS 记录列表失败:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // DNS 解析查询（Worker 调用）
 app.get('/api/dns/:subdomain/resolve', async (req, res) => {
     const { subdomain } = req.params;

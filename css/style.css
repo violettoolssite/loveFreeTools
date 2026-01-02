@@ -4870,6 +4870,125 @@ body::after {
     display: inline-block;
 }
 
+/* DNS 记录列表 */
+.dns-records-section {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dns-records-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.dns-records-section h4 {
+    font-size: 14px;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.refresh-btn {
+    background: transparent;
+    border: 1px solid rgba(0, 245, 212, 0.3);
+    border-radius: 4px;
+    padding: 6px 8px;
+    cursor: pointer;
+    color: #00f5d4;
+    transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+    background: rgba(0, 245, 212, 0.1);
+}
+
+.dns-records-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.loading-placeholder {
+    text-align: center;
+    color: #64748b;
+    padding: 20px;
+}
+
+.dns-record-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 13px;
+}
+
+.dns-record-item:last-child {
+    margin-bottom: 0;
+}
+
+.record-type-badge {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-mono);
+    min-width: 60px;
+    text-align: center;
+}
+
+.record-type-badge.type-a { background: #10b981; color: #0a0e17; }
+.record-type-badge.type-aaaa { background: #06b6d4; color: #0a0e17; }
+.record-type-badge.type-cname { background: #8b5cf6; color: white; }
+.record-type-badge.type-txt { background: #f59e0b; color: #0a0e17; }
+.record-type-badge.type-mx { background: #ec4899; color: white; }
+.record-type-badge.type-redirect { background: #00f5d4; color: #0a0e17; }
+
+.record-domain {
+    flex: 1;
+    color: #f1f5f9;
+    font-family: var(--font-mono);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.record-value {
+    color: #64748b;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.record-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.record-status.real-dns {
+    background: #10b981;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+.record-status.local-only {
+    background: #f59e0b;
+}
+
+.no-records {
+    text-align: center;
+    color: #64748b;
+    padding: 30px;
+    font-size: 14px;
+}
+
 .subdomain-url-input {
     width: 100%;
 }

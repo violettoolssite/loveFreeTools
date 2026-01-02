@@ -802,9 +802,51 @@ const App = {
                         </svg>
                         添加记录
                     `;
+                    // 刷新记录列表
+                    loadDnsRecords();
                 }
             });
         }
+        
+        // 加载 DNS 记录列表
+        const dnsRecordsList = document.getElementById('dnsRecordsList');
+        const refreshDnsRecordsBtn = document.getElementById('refreshDnsRecords');
+        
+        const loadDnsRecords = async () => {
+            if (!dnsRecordsList) return;
+            
+            dnsRecordsList.innerHTML = '<div class="loading-placeholder">加载中...</div>';
+            
+            try {
+                const resp = await fetch(`${EmailAPI.API_BASE}/api/dns/public/list`);
+                const data = await resp.json();
+                
+                if (data.success && data.records && data.records.length > 0) {
+                    dnsRecordsList.innerHTML = data.records.map(record => `
+                        <div class="dns-record-item">
+                            <span class="record-status ${record.realDns ? 'real-dns' : 'local-only'}" 
+                                  title="${record.realDns ? 'Cloudflare DNS 已生效' : '仅本地记录'}"></span>
+                            <span class="record-type-badge type-${record.type.toLowerCase()}">${record.type}</span>
+                            <span class="record-domain" title="${record.fullDomain}">${record.fullDomain}</span>
+                            <span class="record-value" title="${record.value}">${record.value}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    dnsRecordsList.innerHTML = '<div class="no-records">暂无记录</div>';
+                }
+            } catch (error) {
+                console.error('加载 DNS 记录失败:', error);
+                dnsRecordsList.innerHTML = '<div class="no-records">加载失败</div>';
+            }
+        };
+        
+        // 刷新按钮
+        if (refreshDnsRecordsBtn) {
+            refreshDnsRecordsBtn.addEventListener('click', loadDnsRecords);
+        }
+        
+        // 初始加载
+        loadDnsRecords();
 
         // GitHub 链接转换
         this.elements.convertUrlBtn.addEventListener('click', () => {
