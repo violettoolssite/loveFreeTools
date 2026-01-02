@@ -226,10 +226,14 @@ app.get('/api/domains', async (req, res) => {
 
 // 添加域名（无需验证）
 app.post('/api/domains', async (req, res) => {
-    const { name, api } = req.body;
+    let { name, api } = req.body;
     if (!name || !api) {
         return res.status(400).json({ success: false, error: '缺少 name 或 api 参数' });
     }
+
+    // 清理域名：去除空格和尾部斜杠
+    name = name.trim().replace(/\/+$/, '');
+    api = api.trim().replace(/\/+$/, '');
 
     try {
         await pool.query('INSERT INTO domains (name, api) VALUES (?, ?)', [name, api]);
