@@ -22,6 +22,7 @@
 | GitHub 代理 | 域名后接仓库路径 | https://{domain}/{user}/{repo} |
 | 文件加速 | 使用 proxy 路径 | https://{domain}/proxy/?url={URL} |
 | 短链接 | 使用 /s/ 路径 | https://{domain}/s/{code} |
+| 免费子域名 | 申请子域名 | xxx.lovefreetools.site |
 | HTTP 代理 | 配置代理地址 | 115.190.229.8:8888 |
 
 当前可用域名：
@@ -103,7 +104,23 @@ AI 模型配置：
 - **自动重定向**：自动跟随 HTTP 重定向
 - **保留文件名**：保持原始文件名
 
-### 6. 免费 HTTP 代理
+### 6. 免费子域名服务
+
+为用户提供免费的子域名解析服务：
+
+- **可用域名**：`lovefreetools.site`、`violet27team.xyz`
+- **支持记录类型**：A、AAAA、CNAME、MX、TXT、REDIRECT
+- **Cloudflare 代理**：A/AAAA/CNAME 记录可开启 Cloudflare CDN 加速
+- **用户密钥管理**：每条记录绑定用户密钥，自主管理删除
+- **实时 DNS**：通过 Cloudflare API 创建真实 DNS 记录
+
+使用方式：
+1. 在前端点击"申请子域名"
+2. 输入子域名、选择域名、配置记录类型和值
+3. 设置管理密钥（用于后续删除）
+4. 点击添加记录
+
+### 7. 免费 HTTP 代理
 
 为爬虫和自动化工具提供免费的国内 HTTP 代理服务：
 
@@ -221,6 +238,9 @@ pm2 startup
 | DB_NAME | 数据库名 | free_email |
 | RESEND_API_KEY | Resend 邮件发送 API Key | re_xxx |
 | ADMIN_KEY | 管理员密钥 | your_admin_key |
+| CF_DNS_API_TOKEN | Cloudflare DNS API Token | xxx |
+| CF_ZONE_LOVEFREETOOLS | lovefreetools.site Zone ID | xxx |
+| CF_ZONE_VIOLET27TEAM | violet27team.xyz Zone ID | xxx |
 
 ### 步骤 3：配置 Nginx 反向代理
 
@@ -612,20 +632,20 @@ loveFreeTools/
 │
 ├── server/
 │   ├── index.js                  # Node.js 后端主程序
-│   ├── workers-mysql.js          # Cloudflare Worker 代码（MySQL 版）
-│   ├── workers-neon.js           # Cloudflare Worker 代码（Neon 版）
+│   ├── workers-mysql.js          # Cloudflare Worker 代码
+│   ├── cloudflare-dns.js         # Cloudflare DNS API 模块
 │   ├── database.sql              # MySQL 数据库结构
-│   ├── database-postgres.sql     # PostgreSQL 数据库结构
 │   ├── database-upgrade-ai.sql   # AI 字段升级脚本
 │   ├── create-short-links-table.sql  # 短链接表创建脚本
+│   ├── create-dns-records-table.sql  # DNS 记录表创建脚本
 │   ├── package.json              # Node.js 依赖配置
 │   ├── env.example.txt           # 环境变量示例
-│   ├── freeEmail.conf            # Nginx 配置示例
-│   └── *.md                      # 部署文档
+│   ├── update-server.sh          # 服务器更新脚本
+│   └── DEPLOY.md                 # 部署文档
 │
-├── workers.js                    # 旧版 Worker（KV 存储版本）
 ├── workers-download.js           # 文件下载代理 Worker
 ├── wrangler.toml                 # Wrangler CLI 配置
+├── .gitignore                    # Git 忽略文件
 │
 └── proxy-server/
     ├── install-tinyproxy.sh      # TinyProxy 安装脚本
